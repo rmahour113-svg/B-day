@@ -128,36 +128,46 @@
             </div>
         </template>
 
-        <!-- Page 3: Music -->
+        <!-- Page 3: Virtual Wishes -->
         <template x-if="currentPage === 3">
             <div class="w-full max-w-4xl" x-transition>
-                <div class="bg-white rounded-[3.5rem] p-12 text-slate-900 relative overflow-hidden shadow-2xl mb-12 border border-pink-100">
-                    <div class="absolute top-0 right-0 w-80 h-80 bg-pink-100/50 blur-[100px] -mr-32 -mt-32"></div>
-                    <div class="relative z-10 flex flex-col md:flex-row items-center gap-12">
-                        <div class="relative w-64 h-64 rounded-3xl overflow-hidden shadow-2xl shrink-0 border-4 border-white" :class="isPlaying ? 'animate-pulse' : ''">
-                            <img src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=800&q=80" alt="Birthday" class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex-grow text-center md:text-left">
-                            <span class="text-pink-500 font-bold text-xs uppercase tracking-[0.3em] mb-2 block">Now Playing</span>
-                            <h3 class="text-3xl md:text-5xl font-black mb-6 leading-tight">BIRTHDAY VIBES</h3>
-                            <div class="bg-slate-50 rounded-2xl p-6 mb-8 min-h-[100px] flex items-center justify-center border border-slate-100 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-pink-500"></div>
-                                <p class="text-lg md:text-2xl font-bold text-slate-700 italic" x-text="currentLyric"></p>
-                            </div>
-                            <div class="flex flex-col sm:flex-row items-center gap-4">
-                                <button @click="togglePlay()" class="bg-pink-500 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-pink-600 transition-all flex items-center gap-3 shadow-xl active:scale-95">
-                                    <i :data-lucide="isPlaying ? 'pause' : 'play'" class="w-6 h-6 fill-current"></i>
-                                    <span x-text="isPlaying ? 'Pause' : 'Play Music'"></span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                <div class="text-center mb-12">
+                    <span class="text-pink-500 font-bold uppercase tracking-widest text-sm">Special For You</span>
+                    <h2 class="text-3xl md:text-5xl font-black mt-2 uppercase">VIRTUAL WISHES</h2>
+                    <p class="text-slate-600 mt-4">Click on each card to reveal a special wish I have for you! ✨</p>
                 </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <template x-for="wish in sweetWishes" :key="wish.id">
+                        <div 
+                            @click="toggleWish(wish.id)"
+                            class="cursor-pointer p-8 rounded-[2rem] border-2 transition-all duration-500 flex flex-col items-center text-center"
+                            :class="revealedWishes.includes(wish.id) ? 'bg-white border-pink-200 shadow-xl scale-105' : 'bg-pink-50 border-transparent hover:border-pink-100 shadow-sm'"
+                        >
+                            <div 
+                                class="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-500"
+                                :class="revealedWishes.includes(wish.id) ? 'bg-pink-500 text-white' : 'bg-white text-pink-500'"
+                            >
+                                <template x-if="revealedWishes.includes(wish.id)">
+                                    <i :data-lucide="wish.icon" class="w-8 h-8"></i>
+                                </template>
+                                <template x-if="!revealedWishes.includes(wish.id)">
+                                    <i data-lucide="gift" class="w-8 h-8"></i>
+                                </template>
+                            </div>
+                            
+                            <h3 class="text-xl font-bold mb-4" x-text="revealedWishes.includes(wish.id) ? wish.title : 'Tap to reveal'"></h3>
+                            
+                            <div x-show="revealedWishes.includes(wish.id)" x-transition class="text-slate-600 italic leading-relaxed" x-text="wish.message"></div>
+                        </div>
+                    </template>
+                </div>
+
                 <div class="flex flex-col sm:flex-row justify-center gap-4">
                     <button @click="prevPage()" class="bg-white text-slate-600 border-2 border-slate-100 px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-50 flex items-center justify-center gap-2 transition-all active:scale-95">
                         <i data-lucide="chevron-left" class="w-5 h-5"></i> Back
                     </button>
-                    <button @click="nextPage()" class="bg-pink-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-pink-600 flex items-center justify-center gap-2 transition-all active:scale-95">
+                    <button @click="nextPage()" class="bg-pink-50 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-pink-600 flex items-center justify-center gap-2 transition-all active:scale-95">
                         One Last Thing <i data-lucide="chevron-right" class="w-5 h-5"></i>
                     </button>
                 </div>
@@ -205,50 +215,33 @@
         </template>
     </div>
 
-    <!-- Hidden YouTube Player -->
-    <div id="player" style="display:none"></div>
-
     <script>
-        // YouTube Player Integration
-        var tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        var firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-        var player;
-        function onYouTubeIframeAPIReady() {
-            player = new YT.Player('player', {
-                height: '0',
-                width: '0',
-                videoId: 'f-jN3vH26NQ',
-                events: {
-                    'onReady': onPlayerReady
-                }
-            });
-        }
-
-        function onPlayerReady(event) {
-            console.log("Player Ready");
-        }
-
         function birthdayApp() {
             return {
                 currentPage: 0,
                 isOpened: false,
-                isPlaying: false,
+                revealedWishes: [],
                 showConfetti: false,
                 showFinalSurprise: false,
-                currentLyric: "🎵 To the most special person... 🎵",
-                lyrics: [
-                    { time: 0, text: "🎵 To the most special person... 🎵" },
-                    { time: 4, text: "Happy Birthday to you... ❤️" },
-                    { time: 8, text: "Happy Birthday to you... 🌹" },
-                    { time: 12, text: "Happy Birthday my favorite... ✨" },
-                    { time: 16, text: "Happy Birthday to you! 💖" },
-                    { time: 20, text: "You make my world brighter... 🌟" },
-                    { time: 24, text: "Every single day... 🌈" },
-                    { time: 28, text: "I'm so glad I found you... 🤝" },
-                    { time: 32, text: "Happy Birthday! 🎂" }
+                sweetWishes: [
+                    {
+                        id: 1,
+                        title: "My First Wish",
+                        message: "May your life be filled with as much happiness as you've brought into mine since we started talking. ✨",
+                        icon: "star"
+                    },
+                    {
+                        id: 2,
+                        title: "My Second Wish",
+                        message: "I wish for the day we finally meet to be the most magical day ever. I can't wait to see you for real! 🤝",
+                        icon: "heart"
+                    },
+                    {
+                        id: 3,
+                        title: "My Third Wish",
+                        message: "May all your dreams come true, and I hope I can be a part of making them happen. Happy Birthday! 🎂",
+                        icon: "sparkles"
+                    }
                 ],
                 nextPage() {
                     this.currentPage = Math.min(this.currentPage + 1, 4);
@@ -262,25 +255,13 @@
                     this.isOpened = true;
                     this.triggerConfetti();
                 },
-                togglePlay() {
-                    if (this.isPlaying) {
-                        player.pauseVideo();
-                        this.isPlaying = false;
+                toggleWish(id) {
+                    if (this.revealedWishes.includes(id)) {
+                        this.revealedWishes = this.revealedWishes.filter(w => w !== id);
                     } else {
-                        player.playVideo();
-                        this.isPlaying = true;
-                        this.startLyricSync();
+                        this.revealedWishes.push(id);
                     }
                     this.$nextTick(() => lucide.createIcons());
-                },
-                startLyricSync() {
-                    setInterval(() => {
-                        if (this.isPlaying) {
-                            const time = player.getCurrentTime();
-                            const lyric = [...this.lyrics].reverse().find(l => l.time <= time);
-                            if (lyric) this.currentLyric = lyric.text;
-                        }
-                    }, 500);
                 },
                 revealFinal() {
                     this.showFinalSurprise = true;
@@ -290,9 +271,8 @@
                 resetApp() {
                     this.currentPage = 0;
                     this.isOpened = false;
-                    this.isPlaying = false;
+                    this.revealedWishes = [];
                     this.showFinalSurprise = false;
-                    player.stopVideo();
                     this.$nextTick(() => lucide.createIcons());
                 },
                 triggerConfetti() {

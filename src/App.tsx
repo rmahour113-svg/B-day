@@ -3,12 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Gift, Cake, Star, Music, Camera, MessageCircle, Sparkles, ChevronRight, ChevronLeft, Play, Pause, Flame } from 'lucide-react';
-import ReactPlayer from 'react-player';
-
-const Player = ReactPlayer as any;
+import { Heart, Gift, Cake, Star, Camera, MessageCircle, Sparkles, ChevronRight, ChevronLeft, Flame } from 'lucide-react';
 
 // Confetti component for celebration
 const Confetti = () => {
@@ -57,28 +54,6 @@ const Confetti = () => {
   );
 };
 
-const MusicVisualizer = ({ isPlaying }: { isPlaying: boolean }) => {
-  return (
-    <div className="flex items-end gap-1 h-6">
-      {[...Array(5)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="w-1 bg-white/60 rounded-full"
-          animate={{
-            height: isPlaying ? [6, 20, 10, 24, 14, 6] : 6,
-          }}
-          transition={{
-            duration: 1,
-            repeat: Infinity,
-            delay: i * 0.1,
-            ease: "easeInOut",
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
 const BigButton = ({ onClick, children, variant = 'primary', className = '' }: { onClick: () => void, children: React.ReactNode, variant?: 'primary' | 'secondary', className?: string }) => {
   const baseStyles = "px-8 py-4 rounded-full font-bold text-lg transition-all shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto min-w-[160px]";
   const variants = {
@@ -103,30 +78,37 @@ export default function App() {
   const [direction, setDirection] = useState(0); // 1 for forward, -1 for backward
   const [isOpened, setIsOpened] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playerReady, setPlayerReady] = useState(false);
-  const [youtubeUrl, setYoutubeUrl] = useState("https://www.youtube.com/watch?v=f-jN3vH26NQ");
-  const playerRef = React.useRef<any>(null);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [revealedWishes, setRevealedWishes] = useState<number[]>([]);
+  const [showFinalSurprise, setShowFinalSurprise] = useState(false);
 
-  const lyrics = [
-    { time: 0, text: "🎵 To the most special person... 🎵" },
-    { time: 4, text: "Happy Birthday to you... ❤️" },
-    { time: 8, text: "Happy Birthday to you... 🌹" },
-    { time: 12, text: "Happy Birthday my favorite... ✨" },
-    { time: 16, text: "Happy Birthday to you! 💖" },
-    { time: 20, text: "You make my world brighter... 🌟" },
-    { time: 24, text: "Every single day... 🌈" },
-    { time: 28, text: "I'm so glad I found you... 🤝" },
-    { time: 32, text: "Happy Birthday! 🎂" }
+  const sweetWishes = [
+    {
+      id: 1,
+      title: "My First Wish",
+      message: "May your life be filled with as much happiness as you've brought into mine since we started talking. ✨",
+      icon: <Star className="w-6 h-6" />
+    },
+    {
+      id: 2,
+      title: "My Second Wish",
+      message: "I wish for the day we finally meet to be the most magical day ever. I can't wait to see you for real! 🤝",
+      icon: <Heart className="w-6 h-6" />
+    },
+    {
+      id: 3,
+      title: "My Third Wish",
+      message: "May all your dreams come true, and I hope I can be a part of making them happen. Happy Birthday! 🎂",
+      icon: <Sparkles className="w-6 h-6" />
+    }
   ];
 
-  const currentLyric = [...lyrics].reverse().find(l => l.time <= currentTime)?.text || lyrics[0].text;
-
-  useEffect(() => {
-    setPlayerReady(false);
-    setIsPlaying(false);
-  }, [youtubeUrl]);
+  const toggleWish = (id: number) => {
+    if (revealedWishes.includes(id)) {
+      setRevealedWishes(revealedWishes.filter(w => w !== id));
+    } else {
+      setRevealedWishes([...revealedWishes, id]);
+    }
+  };
 
   const memories = [
     {
@@ -165,21 +147,12 @@ export default function App() {
     setDirection(-1);
     setCurrentPage((prev) => Math.max(prev - 1, 0));
   };
-  const lastToggleTime = useRef(0);
-  const togglePlay = () => {
-    const now = Date.now();
-    if (now - lastToggleTime.current < 500) return; // Prevent toggling faster than 500ms
-    lastToggleTime.current = now;
-    setIsPlaying(!isPlaying);
-  };
-
-  const [showFinalSurprise, setShowFinalSurprise] = useState(false);
 
   const resetApp = () => {
     setDirection(-1);
     setCurrentPage(0);
     setIsOpened(false);
-    setIsPlaying(false);
+    setRevealedWishes([]);
     setShowFinalSurprise(false);
   };
 
@@ -218,36 +191,6 @@ export default function App() {
   return (
     <div className="min-h-screen w-full bg-[#FFF5F5] font-sans text-slate-900 selection:bg-pink-200 overflow-x-hidden flex flex-col">
       {showConfetti && <Confetti />}
-
-      {/* Global Music Toggle */}
-      {currentPage > 0 && (
-        <motion.button
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          onClick={togglePlay}
-          className="fixed top-6 right-6 z-50 bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-lg border border-pink-100 text-pink-500 hover:bg-pink-50 transition-all"
-        >
-          {isPlaying ? <Music className="w-6 h-6 animate-pulse" /> : <Music className="w-6 h-6 opacity-50" />}
-        </motion.button>
-      )}
-
-      {/* Persistent Background Player */}
-      <div className="hidden">
-        <Player 
-          ref={playerRef}
-          url={youtubeUrl}
-          playing={isPlaying}
-          onReady={() => setPlayerReady(true)}
-          onEnded={() => setIsPlaying(false)}
-          onProgress={(progress: any) => setCurrentTime(progress.playedSeconds)}
-          onError={(e: any) => {
-            console.warn("Player error (likely interrupted play/pause):", e);
-            setIsPlaying(false);
-          }}
-          width="0px"
-          height="0px"
-        />
-      </div>
 
       <main className="flex-grow flex items-center justify-center p-6 relative">
         <AnimatePresence mode="wait" custom={direction}>
@@ -388,7 +331,7 @@ export default function App() {
 
           {currentPage === 3 && (
             <motion.div 
-              key="playlist"
+              key="wishes"
               custom={direction}
               variants={pageVariants}
               initial="initial"
@@ -396,62 +339,51 @@ export default function App() {
               exit="exit"
               className="w-full max-w-4xl"
             >
-              <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-12 text-slate-900 relative overflow-hidden shadow-2xl mb-12 border border-pink-100">
-                <div className="absolute top-0 right-0 w-64 h-64 md:w-80 md:h-80 bg-pink-100/50 blur-[100px] -mr-32 -mt-32" />
-                
-                <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 md:gap-12">
-                  {/* Song Cover Page */}
-                  <motion.div 
-                    variants={itemVariants}
-                    className={`relative w-48 h-48 md:w-64 md:h-64 rounded-3xl overflow-hidden shadow-2xl shrink-0 border-4 border-white ${isPlaying ? 'animate-pulse' : ''}`}
-                    style={{ boxShadow: '0 20px 50px rgba(236, 72, 153, 0.3)' }}
-                  >
-                    <img 
-                      src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=800&q=80" 
-                      alt="Birthday Celebration" 
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-6">
-                      <h4 className="text-white font-black text-xl">Birthday Anthem</h4>
-                      <p className="text-white/80 text-xs font-bold uppercase tracking-widest">Special Edition</p>
-                    </div>
-                  </motion.div>
-                  
-                  <motion.div variants={itemVariants} className="flex-grow text-center md:text-left">
-                    <span className="text-pink-500 font-bold text-xs uppercase tracking-[0.3em] mb-2 block">Now Playing</span>
-                    <h3 className="text-3xl md:text-5xl font-black mb-6 leading-tight">BIRTHDAY VIBES</h3>
-                    
-                    {/* Lyrics Display */}
-                    <div className="bg-slate-50 rounded-2xl p-6 mb-8 min-h-[100px] flex items-center justify-center border border-slate-100 relative overflow-hidden">
-                      <div className="absolute top-0 left-0 w-1 h-full bg-pink-500" />
-                      <AnimatePresence mode="wait">
-                        <motion.p 
-                          key={currentLyric}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className="text-lg md:text-2xl font-bold text-slate-700 italic"
-                        >
-                          {currentLyric}
-                        </motion.p>
-                      </AnimatePresence>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-center gap-4">
-                      <button 
-                        onClick={togglePlay}
-                        className="bg-pink-500 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-pink-600 transition-all flex items-center gap-3 shadow-xl shadow-pink-200 active:scale-95"
-                      >
-                        {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current" />}
-                        {isPlaying ? 'Pause' : 'Play Music'}
-                      </button>
-                      <div className="flex items-center gap-2">
-                        <MusicVisualizer isPlaying={isPlaying} />
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
+              <motion.div variants={itemVariants} className="text-center mb-12">
+                <span className="text-pink-500 font-bold uppercase tracking-widest text-sm">Special For You</span>
+                <h2 className="text-3xl md:text-5xl font-black mt-2 uppercase">VIRTUAL WISHES</h2>
+                <p className="text-slate-600 mt-4">Click on each card to reveal a special wish I have for you! ✨</p>
               </motion.div>
+
+              <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                {sweetWishes.map((wish) => (
+                  <motion.div
+                    key={wish.id}
+                    layout
+                    onClick={() => toggleWish(wish.id)}
+                    className={`cursor-pointer p-8 rounded-[2rem] border-2 transition-all duration-500 flex flex-col items-center text-center ${
+                      revealedWishes.includes(wish.id) 
+                        ? 'bg-white border-pink-200 shadow-xl scale-105' 
+                        : 'bg-pink-50 border-transparent hover:border-pink-100 shadow-sm'
+                    }`}
+                  >
+                    <motion.div 
+                      layout
+                      className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 ${
+                        revealedWishes.includes(wish.id) ? 'bg-pink-500 text-white' : 'bg-white text-pink-500'
+                      }`}
+                    >
+                      {revealedWishes.includes(wish.id) ? wish.icon : <Gift className="w-8 h-8" />}
+                    </motion.div>
+                    
+                    <h3 className="text-xl font-bold mb-4">{revealedWishes.includes(wish.id) ? wish.title : "Tap to reveal"}</h3>
+                    
+                    <AnimatePresence mode="wait">
+                      {revealedWishes.includes(wish.id) && (
+                        <motion.p
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="text-slate-600 italic leading-relaxed"
+                        >
+                          {wish.message}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                ))}
+              </motion.div>
+
               <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-center gap-4">
                 <BigButton onClick={prevPage} variant="secondary">
                   <ChevronLeft className="w-5 h-5" /> Back
