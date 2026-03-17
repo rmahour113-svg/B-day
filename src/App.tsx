@@ -213,7 +213,7 @@ export default function App() {
                 <Cake className="w-16 h-16 md:w-20 md:h-20 text-pink-500" />
               </motion.div>
               <motion.h1 variants={itemVariants} className="text-5xl md:text-8xl font-black tracking-tighter text-slate-900 mb-4 leading-tight">
-                HAPPY <span className="text-pink-500">BIRTHDAY</span>
+                HAPPY BIRTHDAY <span className="text-pink-500 block">ANSHIKA</span>
               </motion.h1>
               <motion.p variants={itemVariants} className="text-lg md:text-2xl font-medium text-slate-600 max-w-2xl mx-auto leading-relaxed mb-12">
                 To the most special person in my life. Today is all about celebrating YOU and the magic you bring!
@@ -468,7 +468,7 @@ export default function App() {
               )}
               
               <motion.p variants={itemVariants} className="mt-12 text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-[0.4em]">
-                Made with love for my favorite person &bull; 2026
+                Made with love by Harsh 🌙 &bull; 2026
               </motion.p>
             </motion.div>
           )}

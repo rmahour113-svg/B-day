@@ -9,20 +9,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #FFF5F5; }
-        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
         [x-cloak] { display: none !important; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #FFF5F5; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
         @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-10px) rotate(2deg); }
         }
         .animate-float { animation: float 3s ease-in-out infinite; }
+        
+        /* Custom transitions for Alpine */
+        .fade-enter { opacity: 0; transform: scale(0.95); }
+        .fade-enter-active { transition: all 0.4s ease-out; }
+        .fade-enter-to { opacity: 1; transform: scale(1); }
+        .fade-exit { opacity: 1; transform: scale(1); }
+        .fade-exit-active { transition: all 0.4s ease-in; }
+        .fade-exit-to { opacity: 0; transform: scale(0.95); }
     </style>
 </head>
-<body x-data="birthdayApp()" class="min-h-screen flex flex-col overflow-x-hidden">
+<body x-data="birthdayApp()" class="min-h-screen flex flex-col overflow-x-hidden selection:bg-pink-200">
 
     <!-- Confetti Canvas -->
-    <canvas id="confetti" class="fixed inset-0 pointer-events-none z-50" x-show="showConfetti"></canvas>
+    <canvas id="confetti" class="fixed inset-0 pointer-events-none z-50"></canvas>
 
     <!-- Background Icons -->
     <div class="fixed inset-0 pointer-events-none opacity-[0.03] z-0 hidden sm:block">
@@ -33,185 +45,185 @@
     </div>
 
     <!-- Main Content -->
-    <main class="flex-grow flex items-center justify-center p-6 relative z-10">
+    <main class="flex-grow flex items-center justify-center p-4 md:p-6 relative z-10">
         
         <!-- Page 0: Hero -->
-        <template x-if="currentPage === 0">
-            <div class="text-center w-full max-w-4xl" x-transition>
-                <div class="inline-block mb-6 animate-float">
-                    <i data-lucide="cake" class="w-20 h-20 text-pink-500"></i>
-                </div>
-                <h1 class="text-5xl md:text-8xl font-black tracking-tighter text-slate-900 mb-4 leading-tight">
-                    HAPPY <span class="text-pink-500">BIRTHDAY</span>
-                </h1>
-                <p class="text-lg md:text-2xl font-medium text-slate-600 max-w-2xl mx-auto leading-relaxed mb-12">
-                    To the most special person in my life. Today is all about celebrating YOU and the magic you bring!
-                </p>
-                <button @click="nextPage()" class="mx-auto bg-pink-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-pink-600 shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95">
-                    Start the Celebration <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                </button>
+        <div x-show="currentPage === 0" 
+             x-transition:enter="fade-enter-active" x-transition:enter-start="fade-enter" x-transition:enter-end="fade-enter-to"
+             x-transition:leave="fade-exit-active" x-transition:leave-start="fade-exit" x-transition:leave-end="fade-exit-to"
+             class="text-center w-full max-w-4xl">
+            <div class="inline-block mb-6 animate-float">
+                <i data-lucide="cake" class="w-16 h-16 md:w-20 md:h-20 text-pink-500"></i>
             </div>
-        </template>
+            <h1 class="text-4xl md:text-8xl font-black tracking-tighter text-slate-900 mb-4 leading-tight uppercase">
+                HAPPY BIRTHDAY <span class="text-pink-500 block">ANSHIKA</span>
+            </h1>
+            <p class="text-base md:text-2xl font-medium text-slate-600 max-w-2xl mx-auto leading-relaxed mb-8 md:mb-12">
+                To the most special person in my life. Today is all about celebrating YOU and the magic you bring!
+            </p>
+            <button @click="nextPage()" class="mx-auto bg-pink-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-pink-600 shadow-lg shadow-pink-200 flex items-center justify-center gap-2 transition-all active:scale-95 w-full sm:w-auto">
+                Start the Celebration <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
+        </div>
 
         <!-- Page 1: Gift -->
-        <template x-if="currentPage === 1">
-            <div class="text-center w-full max-w-4xl" x-transition>
-                <h2 class="text-3xl md:text-4xl font-bold mb-12">I have a little something for you...</h2>
-                <div class="relative flex justify-center items-center min-h-[300px] mb-12">
-                    <div x-show="!isOpened" @click="openGift()" class="cursor-pointer group relative">
-                        <div class="absolute -inset-4 bg-pink-500/20 rounded-full blur-xl group-hover:bg-pink-500/30 transition-all"></div>
-                        <i data-lucide="gift" class="w-32 h-32 text-pink-500 relative z-10"></i>
-                        <p class="mt-4 font-bold text-pink-600 uppercase tracking-widest text-sm">Click to open</p>
-                    </div>
-                    <div x-show="isOpened" x-cloak class="bg-white p-10 rounded-[2.5rem] border-2 border-pink-100 shadow-2xl max-w-sm mx-auto">
-                        <i data-lucide="sparkles" class="w-10 h-10 text-yellow-500 mx-auto mb-6"></i>
-                        <h3 class="text-2xl md:text-3xl font-bold text-pink-700 mb-4">A Special Connection</h3>
-                        <p class="text-slate-700 text-lg leading-relaxed italic">
-                            "The best thing that ever happened to me was finding you. May your year be as beautiful and amazing as your smile!"
-                        </p>
-                        <div class="mt-8 flex justify-center gap-3">
-                            <i data-lucide="heart" class="w-6 h-6 text-pink-400 fill-current"></i>
-                            <i data-lucide="heart" class="w-6 h-6 text-pink-400 fill-current"></i>
-                            <i data-lucide="heart" class="w-6 h-6 text-pink-400 fill-current"></i>
-                        </div>
-                    </div>
+        <div x-show="currentPage === 1" x-cloak
+             x-transition:enter="fade-enter-active" x-transition:enter-start="fade-enter" x-transition:enter-end="fade-enter-to"
+             x-transition:leave="fade-exit-active" x-transition:leave-start="fade-exit" x-transition:leave-end="fade-exit-to"
+             class="text-center w-full max-w-4xl">
+            <h2 class="text-2xl md:text-4xl font-bold mb-8 md:mb-12">I have a little something for you...</h2>
+            <div class="relative flex justify-center items-center min-h-[250px] md:min-h-[300px] mb-8 md:mb-12">
+                <div x-show="!isOpened" @click="openGift()" class="cursor-pointer group relative">
+                    <div class="absolute -inset-4 bg-pink-500/20 rounded-full blur-xl group-hover:bg-pink-500/30 transition-all"></div>
+                    <i data-lucide="gift" class="w-24 h-24 md:w-32 md:h-32 text-pink-500 relative z-10"></i>
+                    <p class="mt-4 font-bold text-pink-600 uppercase tracking-widest text-xs md:text-sm">Click to open</p>
                 </div>
-                <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <button @click="prevPage()" class="bg-white text-slate-600 border-2 border-slate-100 px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-50 flex items-center justify-center gap-2 transition-all active:scale-95">
-                        <i data-lucide="chevron-left" class="w-5 h-5"></i> Back
-                    </button>
-                    <button @click="nextPage()" class="bg-pink-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-pink-600 flex items-center justify-center gap-2 transition-all active:scale-95">
-                        Next Surprise <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                    </button>
+                <div x-show="isOpened" x-cloak class="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border-2 border-pink-100 shadow-2xl max-w-sm mx-auto">
+                    <i data-lucide="sparkles" class="w-8 h-8 md:w-10 md:h-10 text-yellow-500 mx-auto mb-4 md:mb-6"></i>
+                    <h3 class="text-xl md:text-3xl font-bold text-pink-700 mb-4">A Special Connection</h3>
+                    <p class="text-slate-700 text-sm md:text-lg leading-relaxed italic">
+                        "The best thing that ever happened to me was finding you. May your year be as beautiful and amazing as your smile!"
+                    </p>
+                    <div class="mt-6 md:mt-8 flex justify-center gap-3">
+                        <i data-lucide="heart" class="w-5 h-5 md:w-6 md:h-6 text-pink-400 fill-current"></i>
+                        <i data-lucide="heart" class="w-5 h-5 md:w-6 md:h-6 text-pink-400 fill-current"></i>
+                        <i data-lucide="heart" class="w-5 h-5 md:w-6 md:h-6 text-pink-400 fill-current"></i>
+                    </div>
                 </div>
             </div>
-        </template>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button @click="prevPage()" class="bg-white text-slate-600 border-2 border-slate-100 px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-50 flex items-center justify-center gap-2 transition-all active:scale-95 w-full sm:w-auto">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i> Back
+                </button>
+                <button @click="nextPage()" class="bg-pink-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-pink-600 flex items-center justify-center gap-2 transition-all active:scale-95 w-full sm:w-auto">
+                    Next Surprise <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
 
         <!-- Page 2: Memories -->
-        <template x-if="currentPage === 2">
-            <div class="w-full max-w-6xl" x-transition>
-                <div class="text-center mb-12">
-                    <span class="text-pink-500 font-bold uppercase tracking-widest text-sm">Our Journey</span>
-                    <h2 class="text-3xl md:text-5xl font-black mt-2">FAVORITE MEMORIES</h2>
+        <div x-show="currentPage === 2" x-cloak
+             x-transition:enter="fade-enter-active" x-transition:enter-start="fade-enter" x-transition:enter-end="fade-enter-to"
+             x-transition:leave="fade-exit-active" x-transition:leave-start="fade-exit" x-transition:leave-end="fade-exit-to"
+             class="w-full max-w-6xl">
+            <div class="text-center mb-8 md:mb-12">
+                <span class="text-pink-500 font-bold uppercase tracking-widest text-xs md:text-sm">Our Journey</span>
+                <h2 class="text-2xl md:text-5xl font-black mt-2 uppercase">FAVORITE MEMORIES</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 mb-8 md:mb-12">
+                <div class="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 hover:-translate-y-2 transition-all">
+                    <div class="w-10 h-10 md:w-12 md:h-12 bg-orange-100 text-orange-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6">
+                        <i data-lucide="flame" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold mb-2 md:mb-3">Hamara Roz Ka Kalesh</h3>
+                    <p class="text-slate-600 text-sm md:text-base leading-relaxed">Hamari dosti bina kalesh ke adhuri hai! Wo cute si ladaiyan aur phir maan jaana hi toh sabse pyaara hai.</p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:-translate-y-2 transition-all">
-                        <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center mb-6">
-                            <i data-lucide="flame" class="w-6 h-6"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-3">Hamara Roz Ka Kalesh</h3>
-                        <p class="text-slate-600 leading-relaxed">Hamari dosti bina kalesh ke adhuri hai! Wo cute si ladaiyan aur phir maan jaana hi toh sabse pyaara hai.</p>
+                <div class="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 hover:-translate-y-2 transition-all">
+                    <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-100 text-blue-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6">
+                        <i data-lucide="star" class="w-6 h-6"></i>
                     </div>
-                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:-translate-y-2 transition-all">
-                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
-                            <i data-lucide="star" class="w-6 h-6"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-3">Waiting to Meet</h3>
-                        <p class="text-slate-600 leading-relaxed">Bhale hi hum kabhi mile nahi, par tumhare saath bitaya har pal mere liye bahut special hai. Us din ka intezaar hai jab hum pehli baar milenge.</p>
-                    </div>
-                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:-translate-y-2 transition-all">
-                        <div class="w-12 h-12 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mb-6">
-                            <i data-lucide="heart" class="w-6 h-6"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-3">Being My Strength</h3>
-                        <p class="text-slate-600 leading-relaxed">Tum hamesha mere saath khadi rehti ho, chahe kuch bhi ho. Mere liye tumse zyada special koi nahi.</p>
-                    </div>
+                    <h3 class="text-lg md:text-xl font-bold mb-2 md:mb-3">Waiting to Meet</h3>
+                    <p class="text-slate-600 text-sm md:text-base leading-relaxed">Bhale hi hum kabhi mile nahi, par tumhare saath bitaya har pal mere liye bahut special hai. Us din ka intezaar hai jab hum pehli baar milenge.</p>
                 </div>
-                <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <button @click="prevPage()" class="bg-white text-slate-600 border-2 border-slate-100 px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-50 flex items-center justify-center gap-2 transition-all active:scale-95">
-                        <i data-lucide="chevron-left" class="w-5 h-5"></i> Back
-                    </button>
-                    <button @click="nextPage()" class="bg-pink-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-pink-600 flex items-center justify-center gap-2 transition-all active:scale-95">
-                        Keep Going <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                    </button>
+                <div class="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 hover:-translate-y-2 transition-all">
+                    <div class="w-10 h-10 md:w-12 md:h-12 bg-red-100 text-red-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6">
+                        <i data-lucide="heart" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold mb-2 md:mb-3">Being My Strength</h3>
+                    <p class="text-slate-600 text-sm md:text-base leading-relaxed">Tum hamesha mere saath khadi rehti ho, chahe kuch bhi ho. Mere liye tumse zyada special koi nahi.</p>
                 </div>
             </div>
-        </template>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button @click="prevPage()" class="bg-white text-slate-600 border-2 border-slate-100 px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-50 flex items-center justify-center gap-2 transition-all active:scale-95 w-full sm:w-auto">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i> Back
+                </button>
+                <button @click="nextPage()" class="bg-pink-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-pink-600 flex items-center justify-center gap-2 transition-all active:scale-95 w-full sm:w-auto">
+                    Keep Going <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
 
         <!-- Page 3: Virtual Wishes -->
-        <template x-if="currentPage === 3">
-            <div class="w-full max-w-4xl" x-transition>
-                <div class="text-center mb-12">
-                    <span class="text-pink-500 font-bold uppercase tracking-widest text-sm">Special For You</span>
-                    <h2 class="text-3xl md:text-5xl font-black mt-2 uppercase">VIRTUAL WISHES</h2>
-                    <p class="text-slate-600 mt-4">Click on each card to reveal a special wish I have for you! ✨</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                    <template x-for="wish in sweetWishes" :key="wish.id">
-                        <div 
-                            @click="toggleWish(wish.id)"
-                            class="cursor-pointer p-8 rounded-[2rem] border-2 transition-all duration-500 flex flex-col items-center text-center"
-                            :class="revealedWishes.includes(wish.id) ? 'bg-white border-pink-200 shadow-xl scale-105' : 'bg-pink-50 border-transparent hover:border-pink-100 shadow-sm'"
-                        >
-                            <div 
-                                class="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-500"
-                                :class="revealedWishes.includes(wish.id) ? 'bg-pink-500 text-white' : 'bg-white text-pink-500'"
-                            >
-                                <template x-if="revealedWishes.includes(wish.id)">
-                                    <i :data-lucide="wish.icon" class="w-8 h-8"></i>
-                                </template>
-                                <template x-if="!revealedWishes.includes(wish.id)">
-                                    <i data-lucide="gift" class="w-8 h-8"></i>
-                                </template>
-                            </div>
-                            
-                            <h3 class="text-xl font-bold mb-4" x-text="revealedWishes.includes(wish.id) ? wish.title : 'Tap to reveal'"></h3>
-                            
-                            <div x-show="revealedWishes.includes(wish.id)" x-transition class="text-slate-600 italic leading-relaxed" x-text="wish.message"></div>
-                        </div>
-                    </template>
-                </div>
-
-                <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <button @click="prevPage()" class="bg-white text-slate-600 border-2 border-slate-100 px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-50 flex items-center justify-center gap-2 transition-all active:scale-95">
-                        <i data-lucide="chevron-left" class="w-5 h-5"></i> Back
-                    </button>
-                    <button @click="nextPage()" class="bg-pink-50 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-pink-600 flex items-center justify-center gap-2 transition-all active:scale-95">
-                        One Last Thing <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                    </button>
-                </div>
+        <div x-show="currentPage === 3" x-cloak
+             x-transition:enter="fade-enter-active" x-transition:enter-start="fade-enter" x-transition:enter-end="fade-enter-to"
+             x-transition:leave="fade-exit-active" x-transition:leave-start="fade-exit" x-transition:leave-end="fade-exit-to"
+             class="w-full max-w-4xl">
+            <div class="text-center mb-8 md:mb-12">
+                <span class="text-pink-500 font-bold uppercase tracking-widest text-xs md:text-sm">Special For You</span>
+                <h2 class="text-2xl md:text-5xl font-black mt-2 uppercase">VIRTUAL WISHES</h2>
+                <p class="text-slate-600 mt-4 text-sm md:text-base">Click on each card to reveal a special wish! ✨</p>
             </div>
-        </template>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
+                <template x-for="wish in sweetWishes" :key="wish.id">
+                    <div 
+                        @click="toggleWish(wish.id)"
+                        class="cursor-pointer p-6 md:p-8 rounded-[2rem] border-2 transition-all duration-500 flex flex-col items-center text-center"
+                        :class="revealedWishes.includes(wish.id) ? 'bg-white border-pink-200 shadow-xl scale-105' : 'bg-pink-50 border-transparent hover:border-pink-100 shadow-sm'"
+                    >
+                        <div 
+                            class="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6 transition-colors duration-500"
+                            :class="revealedWishes.includes(wish.id) ? 'bg-pink-500 text-white' : 'bg-white text-pink-500'"
+                        >
+                            <i :data-lucide="revealedWishes.includes(wish.id) ? wish.icon : 'gift'" class="w-6 h-6 md:w-8 md:h-8"></i>
+                        </div>
+                        
+                        <h3 class="text-lg md:text-xl font-bold mb-2 md:mb-4" x-text="revealedWishes.includes(wish.id) ? wish.title : 'Tap to reveal'"></h3>
+                        
+                        <div x-show="revealedWishes.includes(wish.id)" x-transition class="text-slate-600 italic text-sm md:text-base leading-relaxed" x-text="wish.message"></div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button @click="prevPage()" class="bg-white text-slate-600 border-2 border-slate-100 px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-50 flex items-center justify-center gap-2 transition-all active:scale-95 w-full sm:w-auto">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i> Back
+                </button>
+                <button @click="nextPage()" class="bg-pink-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-pink-600 flex items-center justify-center gap-2 transition-all active:scale-95 w-full sm:w-auto">
+                    One Last Thing <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
 
         <!-- Page 4: Final Surprise -->
-        <template x-if="currentPage === 4">
-            <div class="text-center max-w-2xl w-full" x-transition>
-                <div x-show="!showFinalSurprise" class="flex flex-col items-center">
-                    <div class="mb-8 animate-float">
-                        <i data-lucide="gift" class="w-24 h-24 text-pink-500"></i>
-                    </div>
-                    <h2 class="text-3xl md:text-5xl font-black mb-6">READY FOR THE LAST SURPRISE?</h2>
-                    <p class="text-slate-600 mb-10 text-lg">I have one more thing to tell you...</p>
-                    <button @click="revealFinal()" class="bg-pink-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-pink-600 shadow-lg transition-all active:scale-95">
-                        Open Final Surprise 🎁
-                    </button>
+        <div x-show="currentPage === 4" x-cloak
+             x-transition:enter="fade-enter-active" x-transition:enter-start="fade-enter" x-transition:enter-end="fade-enter-to"
+             x-transition:leave="fade-exit-active" x-transition:leave-start="fade-exit" x-transition:leave-end="fade-exit-to"
+             class="text-center max-w-2xl w-full">
+            <div x-show="!showFinalSurprise" class="flex flex-col items-center">
+                <div class="mb-8 animate-float">
+                    <i data-lucide="gift" class="w-20 h-20 md:w-24 md:h-24 text-pink-500"></i>
                 </div>
-                <div x-show="showFinalSurprise" x-cloak class="bg-white p-12 rounded-[3rem] shadow-2xl border-4 border-pink-200 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400"></div>
-                    <i data-lucide="heart" class="w-16 h-16 text-pink-500 fill-current mx-auto mb-6"></i>
-                    <h2 class="text-3xl md:text-5xl font-black mb-6 text-slate-800 uppercase">YOU ARE MY FAVORITE!</h2>
-                    <div class="bg-pink-50 p-6 rounded-2xl mb-8 border border-pink-100">
-                        <p class="text-lg md:text-2xl text-pink-700 font-bold italic leading-relaxed">
-                            "In a world full of temporary things, you are my favorite constant. Happy Birthday to the one who makes my heart skip a beat!"
-                        </p>
-                    </div>
-                    <p class="text-slate-600 text-xl leading-relaxed mb-10">
-                        I'm so lucky to have you in my life. Thank you for being my constant support, my laughter partner, and my everything. I can't wait to make more beautiful memories with you.
-                    </p>
-                    <button @click="resetApp()" class="bg-white text-slate-600 border-2 border-slate-100 px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-50 flex items-center justify-center gap-2 transition-all active:scale-95">
-                        Start Over <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                    </button>
-                </div>
-                <p class="mt-12 text-xs font-bold text-slate-400 uppercase tracking-[0.4em]">Made with love for my favorite person &bull; 2026</p>
+                <h2 class="text-2xl md:text-5xl font-black mb-6 uppercase">READY FOR THE LAST SURPRISE?</h2>
+                <p class="text-slate-600 mb-8 md:mb-10 text-base md:text-lg">I have one more thing to tell you...</p>
+                <button @click="revealFinal()" class="bg-pink-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-pink-600 shadow-lg transition-all active:scale-95 w-full sm:w-auto">
+                    Open Final Surprise 🎁
+                </button>
             </div>
-        </template>
+            <div x-show="showFinalSurprise" x-cloak class="bg-white p-6 md:p-12 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl border-4 border-pink-200 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400"></div>
+                <i data-lucide="heart" class="w-12 h-12 md:w-16 md:h-16 text-pink-500 fill-current mx-auto mb-4 md:mb-6"></i>
+                <h2 class="text-2xl md:text-5xl font-black mb-4 md:mb-6 text-slate-800 uppercase">YOU ARE MY FAVORITE!</h2>
+                <div class="bg-pink-50 p-4 md:p-6 rounded-2xl mb-6 md:mb-8 border border-pink-100">
+                    <p class="text-base md:text-2xl text-pink-700 font-bold italic leading-relaxed">
+                        "In a world full of temporary things, you are my favorite constant. Happy Birthday to the one who makes my heart skip a beat!"
+                    </p>
+                </div>
+                <p class="text-slate-600 text-sm md:text-xl leading-relaxed mb-8 md:mb-10">
+                    I'm so lucky to have you in my life. Thank you for being my constant support, my laughter partner, and my everything. I can't wait to make more beautiful memories with you.
+                </p>
+                <button @click="resetApp()" class="bg-white text-slate-600 border-2 border-slate-100 px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-50 flex items-center justify-center gap-2 transition-all active:scale-95 w-full sm:w-auto">
+                    Start Over <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="mt-8 md:mt-12 text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-[0.4em]">Made with love by Harsh 🌙 &bull; 2026</p>
+        </div>
     </main>
 
     <!-- Progress Dots -->
-    <div class="pb-8 flex justify-center gap-2 relative z-10">
+    <div class="pb-6 md:pb-8 flex justify-center gap-2 relative z-10">
         <template x-for="i in [0,1,2,3,4]">
-            <div class="h-1.5 rounded-full transition-all duration-500" :class="currentPage === i ? 'w-8 bg-pink-500' : 'w-2 bg-slate-200'"></div>
+            <div class="h-1.5 rounded-full transition-all duration-500" :class="currentPage === i ? 'w-6 md:w-8 bg-pink-500' : 'w-1.5 md:w-2 bg-slate-200'"></div>
         </template>
     </div>
 
@@ -221,7 +233,6 @@
                 currentPage: 0,
                 isOpened: false,
                 revealedWishes: [],
-                showConfetti: false,
                 showFinalSurprise: false,
                 sweetWishes: [
                     {
@@ -246,10 +257,12 @@
                 nextPage() {
                     this.currentPage = Math.min(this.currentPage + 1, 4);
                     this.$nextTick(() => lucide.createIcons());
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
                 prevPage() {
                     this.currentPage = Math.max(this.currentPage - 1, 0);
                     this.$nextTick(() => lucide.createIcons());
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
                 openGift() {
                     this.isOpened = true;
@@ -274,41 +287,66 @@
                     this.revealedWishes = [];
                     this.showFinalSurprise = false;
                     this.$nextTick(() => lucide.createIcons());
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
                 triggerConfetti() {
-                    this.showConfetti = true;
                     const canvas = document.getElementById('confetti');
                     const ctx = canvas.getContext('2d');
                     canvas.width = window.innerWidth;
                     canvas.height = window.innerHeight;
                     
                     let particles = [];
+                    const colors = ['#FF69B4', '#FFD700', '#00CED1', '#FF4500', '#9370DB'];
+                    
                     for(let i=0; i<100; i++) {
                         particles.push({
                             x: Math.random() * canvas.width,
                             y: Math.random() * canvas.height - canvas.height,
-                            size: Math.random() * 10 + 5,
-                            color: ['#FF69B4', '#FFD700', '#00CED1', '#FF4500', '#9370DB'][Math.floor(Math.random()*5)],
-                            speed: Math.random() * 3 + 2
+                            size: Math.random() * 8 + 4,
+                            color: colors[Math.floor(Math.random() * colors.length)],
+                            speed: Math.random() * 3 + 2,
+                            angle: Math.random() * 6.28,
+                            spin: Math.random() * 0.2 - 0.1
                         });
                     }
 
+                    let animationId;
+                    const startTime = Date.now();
+                    
                     const animate = () => {
-                        if (!this.showConfetti) return;
+                        const elapsed = Date.now() - startTime;
+                        if (elapsed > 8000) {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            cancelAnimationFrame(animationId);
+                            return;
+                        }
+                        
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                         particles.forEach(p => {
                             p.y += p.speed;
+                            p.x += Math.sin(p.angle) * 2;
+                            p.angle += p.spin;
+                            
                             if (p.y > canvas.height) p.y = -20;
+                            
                             ctx.fillStyle = p.color;
-                            ctx.fillRect(p.x, p.y, p.size, p.size);
+                            ctx.save();
+                            ctx.translate(p.x, p.y);
+                            ctx.rotate(p.angle);
+                            ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+                            ctx.restore();
                         });
-                        requestAnimationFrame(animate);
+                        animationId = requestAnimationFrame(animate);
                     };
                     animate();
-                    setTimeout(() => this.showConfetti = false, 10000);
                 },
                 init() {
                     lucide.createIcons();
+                    window.addEventListener('resize', () => {
+                        const canvas = document.getElementById('confetti');
+                        canvas.width = window.innerWidth;
+                        canvas.height = window.innerHeight;
+                    });
                 }
             }
         }
