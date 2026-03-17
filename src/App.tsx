@@ -3,10 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Gift, Cake, Star, Music, Camera, MessageCircle, Sparkles, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Heart, Gift, Cake, Star, Music, Camera, MessageCircle, Sparkles, ChevronRight, ChevronLeft, Play, Pause, Flame } from 'lucide-react';
 import ReactPlayer from 'react-player';
+
+const Player = ReactPlayer as any;
 
 // Confetti component for celebration
 const Confetti = () => {
@@ -103,29 +105,45 @@ export default function App() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
-  const [youtubeUrl, setYoutubeUrl] = useState("https://youtu.be/jYTGnTv-CKg?si=zUcIUYICWHvea3-F");
+  const [youtubeUrl, setYoutubeUrl] = useState("https://www.youtube.com/watch?v=f-jN3vH26NQ");
   const playerRef = React.useRef<any>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  const lyrics = [
+    { time: 0, text: "🎵 To the most special person... 🎵" },
+    { time: 4, text: "Happy Birthday to you... ❤️" },
+    { time: 8, text: "Happy Birthday to you... 🌹" },
+    { time: 12, text: "Happy Birthday my favorite... ✨" },
+    { time: 16, text: "Happy Birthday to you! 💖" },
+    { time: 20, text: "You make my world brighter... 🌟" },
+    { time: 24, text: "Every single day... 🌈" },
+    { time: 28, text: "I'm so glad I found you... 🤝" },
+    { time: 32, text: "Happy Birthday! 🎂" }
+  ];
+
+  const currentLyric = [...lyrics].reverse().find(l => l.time <= currentTime)?.text || lyrics[0].text;
 
   useEffect(() => {
     setPlayerReady(false);
+    setIsPlaying(false);
   }, [youtubeUrl]);
 
   const memories = [
     {
-      title: "Late Night Chats",
-      description: "Those endless WhatsApp conversations where we talk about everything from our dreams to our daily struggles.",
-      icon: <MessageCircle className="w-6 h-6" />,
-      color: "bg-green-100 text-green-600"
+      title: "Hamara Roz Ka Kalesh",
+      description: "Hamari dosti bina kalesh ke adhuri hai! Wo cute si ladaiyan aur phir maan jaana hi toh sabse pyaara hai.",
+      icon: <Flame className="w-6 h-6" />,
+      color: "bg-orange-100 text-orange-600"
     },
     {
-      title: "Reel Sharing Spree",
-      description: "Our Instagram DMs are basically a curated collection of the funniest and most relatable reels ever.",
-      icon: <Camera className="w-6 h-6" />,
-      color: "bg-pink-100 text-pink-600"
+      title: "Waiting to Meet",
+      description: "Bhale hi hum kabhi mile nahi, par tumhare saath bitaya har pal mere liye bahut special hai. Us din ka intezaar hai jab hum pehli baar milenge.",
+      icon: <Star className="w-6 h-6" />,
+      color: "bg-blue-100 text-blue-600"
     },
     {
-      title: "Digital Support",
-      description: "Even though we've never met, you're the first person I want to text when something happens. You're always there.",
+      title: "Being My Strength",
+      description: "Tum hamesha mere saath khadi rehti ho, chahe kuch bhi ho. Mere liye tumse zyada special koi nahi.",
       icon: <Heart className="w-6 h-6" />,
       color: "bg-red-100 text-red-600"
     }
@@ -137,6 +155,8 @@ export default function App() {
     setTimeout(() => setShowConfetti(false), 10000);
   };
 
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const nextPage = () => {
     setDirection(1);
     setCurrentPage((prev) => Math.min(prev + 1, 4));
@@ -145,15 +165,22 @@ export default function App() {
     setDirection(-1);
     setCurrentPage((prev) => Math.max(prev - 1, 0));
   };
+  const lastToggleTime = useRef(0);
   const togglePlay = () => {
+    const now = Date.now();
+    if (now - lastToggleTime.current < 500) return; // Prevent toggling faster than 500ms
+    lastToggleTime.current = now;
     setIsPlaying(!isPlaying);
   };
+
+  const [showFinalSurprise, setShowFinalSurprise] = useState(false);
 
   const resetApp = () => {
     setDirection(-1);
     setCurrentPage(0);
     setIsOpened(false);
     setIsPlaying(false);
+    setShowFinalSurprise(false);
   };
 
   const pageVariants = {
@@ -181,7 +208,7 @@ export default function App() {
         opacity: { duration: 0.4 },
       },
     }),
-  };
+  } as any;
 
   const itemVariants = {
     initial: { opacity: 0, y: 20 },
@@ -203,6 +230,24 @@ export default function App() {
           {isPlaying ? <Music className="w-6 h-6 animate-pulse" /> : <Music className="w-6 h-6 opacity-50" />}
         </motion.button>
       )}
+
+      {/* Persistent Background Player */}
+      <div className="hidden">
+        <Player 
+          ref={playerRef}
+          url={youtubeUrl}
+          playing={isPlaying}
+          onReady={() => setPlayerReady(true)}
+          onEnded={() => setIsPlaying(false)}
+          onProgress={(progress: any) => setCurrentTime(progress.playedSeconds)}
+          onError={(e: any) => {
+            console.warn("Player error (likely interrupted play/pause):", e);
+            setIsPlaying(false);
+          }}
+          width="0px"
+          height="0px"
+        />
+      </div>
 
       <main className="flex-grow flex items-center justify-center p-6 relative">
         <AnimatePresence mode="wait" custom={direction}>
@@ -228,7 +273,7 @@ export default function App() {
                 HAPPY <span className="text-pink-500">BIRTHDAY</span>
               </motion.h1>
               <motion.p variants={itemVariants} className="text-lg md:text-2xl font-medium text-slate-600 max-w-2xl mx-auto leading-relaxed mb-12">
-                To my absolute best friend in the whole world. Today is all about celebrating YOU!
+                To the most special person in my life. Today is all about celebrating YOU and the magic you bring!
               </motion.p>
               <motion.div variants={itemVariants}>
                 <BigButton onClick={nextPage} className="mx-auto">
@@ -274,9 +319,9 @@ export default function App() {
                       className="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border-2 border-pink-100 shadow-2xl max-w-sm mx-auto"
                     >
                       <Sparkles className="w-10 h-10 text-yellow-500 mx-auto mb-4 md:mb-6" />
-                      <h3 className="text-2xl md:text-3xl font-bold text-pink-700 mb-4">A Lifetime of Friendship</h3>
+                      <h3 className="text-2xl md:text-3xl font-bold text-pink-700 mb-4">A Special Connection</h3>
                       <p className="text-slate-700 text-base md:text-lg leading-relaxed italic">
-                        "The best gift I ever received was your friendship. May your year be as bright, beautiful, and amazing as you are!"
+                        "The best thing that ever happened to me was finding you. May your year be as beautiful and amazing as your smile!"
                       </p>
                       <div className="mt-6 md:mt-8 flex justify-center gap-3">
                         {[1, 2, 3].map(i => (
@@ -351,57 +396,59 @@ export default function App() {
               exit="exit"
               className="w-full max-w-4xl"
             >
-              <motion.div variants={itemVariants} className="bg-slate-900 rounded-[2rem] md:rounded-[3rem] p-8 md:p-16 text-white relative overflow-hidden shadow-2xl mb-12">
-                <div className="absolute top-0 right-0 w-64 h-64 md:w-80 md:h-80 bg-pink-500/20 blur-[100px] md:blur-[120px] -mr-32 -mt-32 md:-mr-40 md:-mt-40" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 md:w-80 md:h-80 bg-blue-500/20 blur-[100px] md:blur-[120px] -ml-32 -mb-32 md:-ml-40 md:-mb-40" />
+              <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-12 text-slate-900 relative overflow-hidden shadow-2xl mb-12 border border-pink-100">
+                <div className="absolute top-0 right-0 w-64 h-64 md:w-80 md:h-80 bg-pink-100/50 blur-[100px] -mr-32 -mt-32" />
                 
-                <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 md:gap-12 text-center md:text-left">
+                <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                  {/* Song Cover Page */}
                   <motion.div 
                     variants={itemVariants}
-                    className={`w-40 h-40 md:w-56 md:h-56 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl md:rounded-3xl flex flex-col items-center justify-center shadow-2xl shrink-0 relative ${isPlaying ? 'animate-spin-slow' : 'rotate-3'}`}
+                    className={`relative w-48 h-48 md:w-64 md:h-64 rounded-3xl overflow-hidden shadow-2xl shrink-0 border-4 border-white ${isPlaying ? 'animate-pulse' : ''}`}
+                    style={{ boxShadow: '0 20px 50px rgba(236, 72, 153, 0.3)' }}
                   >
-                    <Music className="w-16 h-16 md:w-24 md:h-24 text-white mb-2" />
-                    <div className="absolute bottom-6">
-                      <MusicVisualizer isPlaying={isPlaying} />
+                    <img 
+                      src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=800&q=80" 
+                      alt="Birthday Celebration" 
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-6">
+                      <h4 className="text-white font-black text-xl">Birthday Anthem</h4>
+                      <p className="text-white/80 text-xs font-bold uppercase tracking-widest">Special Edition</p>
                     </div>
                   </motion.div>
                   
-                  <motion.div variants={itemVariants}>
-                    <h3 className="text-2xl md:text-4xl font-bold mb-3 md:mb-4">Birthday Vibes Playlist</h3>
-                    <p className="text-base md:text-xl text-slate-400 mb-6 md:mb-8">A collection of songs that remind me of our best moments together.</p>
+                  <motion.div variants={itemVariants} className="flex-grow text-center md:text-left">
+                    <span className="text-pink-500 font-bold text-xs uppercase tracking-[0.3em] mb-2 block">Now Playing</span>
+                    <h3 className="text-3xl md:text-5xl font-black mb-6 leading-tight">BIRTHDAY VIBES</h3>
                     
-                    <div className="hidden">
-                      <ReactPlayer 
-                        ref={playerRef}
-                        url={youtubeUrl}
-                        playing={isPlaying}
-                        onReady={() => setPlayerReady(true)}
-                        onEnded={() => setIsPlaying(false)}
-                        onError={(e) => {
-                          console.warn("Player error (likely interrupted play/pause):", e);
-                          setIsPlaying(false);
-                        }}
-                        width="0"
-                        height="0"
-                      />
+                    {/* Lyrics Display */}
+                    <div className="bg-slate-50 rounded-2xl p-6 mb-8 min-h-[100px] flex items-center justify-center border border-slate-100 relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-pink-500" />
+                      <AnimatePresence mode="wait">
+                        <motion.p 
+                          key={currentLyric}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="text-lg md:text-2xl font-bold text-slate-700 italic"
+                        >
+                          {currentLyric}
+                        </motion.p>
+                      </AnimatePresence>
                     </div>
 
-                    <div className="mb-6">
-                      <input 
-                        type="text" 
-                        value={youtubeUrl}
-                        onChange={(e) => setYoutubeUrl(e.target.value)}
-                        placeholder="Paste YouTube link here"
-                        className="bg-slate-800 border border-slate-700 text-white px-4 py-2 rounded-lg w-full text-sm mb-4"
-                      />
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      <button 
+                        onClick={togglePlay}
+                        className="bg-pink-500 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-pink-600 transition-all flex items-center gap-3 shadow-xl shadow-pink-200 active:scale-95"
+                      >
+                        {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current" />}
+                        {isPlaying ? 'Pause' : 'Play Music'}
+                      </button>
+                      <div className="flex items-center gap-2">
+                        <MusicVisualizer isPlaying={isPlaying} />
+                      </div>
                     </div>
-
-                    <button 
-                      onClick={togglePlay}
-                      className="bg-white text-slate-900 px-8 py-3 rounded-full font-bold text-base hover:bg-pink-100 transition-colors flex items-center gap-2 mx-auto md:mx-0 shadow-lg"
-                    >
-                      {isPlaying ? 'Pause Song' : 'Play Now'}
-                    </button>
                   </motion.div>
                 </div>
               </motion.div>
@@ -426,35 +473,70 @@ export default function App() {
               exit="exit"
               className="text-center max-w-2xl w-full"
             >
-              <motion.div
-                variants={itemVariants}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                className="mb-6 md:mb-8"
-              >
-                <Heart className="w-16 h-16 md:w-24 md:h-24 text-pink-500 fill-current mx-auto" />
-              </motion.div>
-              <motion.h2 variants={itemVariants} className="text-3xl md:text-5xl font-black mb-4 md:mb-6 leading-tight">CHEERS TO ANOTHER YEAR!</motion.h2>
-              <motion.p variants={itemVariants} className="text-base md:text-xl text-slate-600 leading-relaxed mb-8 md:mb-12">
-                I hope this year brings you as much joy as you bring to everyone around you. 
-                You deserve the world and more. I'm so proud to call you my best friend.
-              </motion.p>
-              
-              <motion.div variants={itemVariants} className="flex justify-center gap-6 md:gap-8 mb-12 md:mb-16">
-                <motion.div whileHover={{ scale: 1.2 }} className="cursor-pointer"><Heart className="w-6 h-6 md:w-8 md:h-8 text-pink-500 fill-current" /></motion.div>
-                <motion.div whileHover={{ scale: 1.2 }} className="cursor-pointer"><Star className="w-6 h-6 md:w-8 md:h-8 text-yellow-500 fill-current" /></motion.div>
-                <motion.div whileHover={{ scale: 1.2 }} className="cursor-pointer"><Sparkles className="w-6 h-6 md:w-8 md:h-8 text-blue-500" /></motion.div>
-              </motion.div>
+              {!showFinalSurprise ? (
+                <motion.div variants={itemVariants} className="flex flex-col items-center">
+                  <motion.div
+                    animate={{ 
+                      scale: [1, 1.1, 1],
+                      rotate: [0, 5, -5, 0]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="mb-8"
+                  >
+                    <Gift className="w-24 h-24 text-pink-500" />
+                  </motion.div>
+                  <h2 className="text-3xl md:text-5xl font-black mb-6">READY FOR THE LAST SURPRISE?</h2>
+                  <p className="text-slate-600 mb-10 text-lg">I have one more thing to tell you...</p>
+                  <BigButton onClick={() => {
+                    setShowFinalSurprise(true);
+                    setShowConfetti(true);
+                    setTimeout(() => setShowConfetti(false), 5000);
+                  }}>
+                    Open Final Surprise 🎁
+                  </BigButton>
+                </motion.div>
+              ) : (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border-4 border-pink-200 relative overflow-hidden"
+                >
+                  <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400" />
+                  
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <Heart className="w-16 h-16 text-pink-500 fill-current mx-auto mb-6" />
+                    <h2 className="text-3xl md:text-5xl font-black mb-6 text-slate-800">YOU ARE MY FAVORITE!</h2>
+                    
+                    <div className="bg-pink-50 p-6 rounded-2xl mb-8 border border-pink-100">
+                      <p className="text-lg md:text-2xl text-pink-700 font-bold italic leading-relaxed">
+                        "In a world full of temporary things, you are my favorite constant. Happy Birthday to the one who makes my heart skip a beat!"
+                      </p>
+                    </div>
 
-              <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
-                <BigButton onClick={resetApp} variant="secondary">
-                  <ChevronLeft className="w-5 h-5" /> Back to Start
-                </BigButton>
-              </motion.div>
+                    <p className="text-slate-600 text-base md:text-xl leading-relaxed mb-10">
+                      I'm so lucky to have you in my life. Thank you for being my constant support, my laughter partner, and my everything. 
+                      I can't wait to make more beautiful memories with you.
+                    </p>
+
+                    <div className="flex justify-center gap-4 mb-10">
+                      <motion.div whileHover={{ scale: 1.2 }} className="p-3 bg-yellow-100 rounded-full"><Star className="w-6 h-6 text-yellow-500 fill-current" /></motion.div>
+                      <motion.div whileHover={{ scale: 1.2 }} className="p-3 bg-blue-100 rounded-full"><Sparkles className="w-6 h-6 text-blue-500" /></motion.div>
+                      <motion.div whileHover={{ scale: 1.2 }} className="p-3 bg-pink-100 rounded-full"><Heart className="w-6 h-6 text-pink-500 fill-current" /></motion.div>
+                    </div>
+
+                    <BigButton onClick={resetApp} variant="secondary">
+                      Start Over <ChevronRight className="w-5 h-5" />
+                    </BigButton>
+                  </motion.div>
+                </motion.div>
+              )}
               
-              <motion.p variants={itemVariants} className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-[0.3em] md:tracking-[0.4em]">
-                Made with love for my best friend &bull; 2026
+              <motion.p variants={itemVariants} className="mt-12 text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-[0.4em]">
+                Made with love for my favorite person &bull; 2026
               </motion.p>
             </motion.div>
           )}
